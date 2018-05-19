@@ -30,5 +30,6 @@
   name = "gopkg.in/src-d/go-git.v4"
 
 [prune]
+  non-go = true
   go-tests = true
   unused-packages = true
