@@ -1,14 +1,15 @@
 package main
 
 import (
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 	"fmt"
-	"regexp"
-	"strings"
-	"strconv"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 var (

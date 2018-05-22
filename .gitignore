@@ -1,3 +1,8 @@
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
 # Binaries for programs and plugins
 *.exe
 *.dll
