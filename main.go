@@ -47,15 +47,15 @@ func init() {
 		return true
 	}()
 	if isGitlabCI {
-		CiCommitTag := os.Getenv("CI_COMMIT_TAG")
-		if len(CiCommitTag) != 0 || CiCommitTag != "" {
-			fmt.Print(CiCommitTag)
+		gitlabCITag := os.Getenv("CI_COMMIT_TAG")
+		if len(gitlabCITag) != 0 || gitlabCITag != "" {
+			fmt.Print(gitlabCITag)
 			os.Exit(0)
 		}
 	} else if isCircleCI {
-		CircleCITag := os.Getenv("CIRCLE_TAG")
-		if len(CircleCITag) != 0 || CircleCITag != "" {
-			fmt.Print(CircleCITag)
+		circleCITag := os.Getenv("CIRCLE_TAG")
+		if len(circleCITag) != 0 || circleCITag != "" {
+			fmt.Print(circleCITag)
 			os.Exit(0)
 		}
 	} else {
@@ -130,16 +130,16 @@ func GetMaxBranchVersion() string {
 	if len(branches) == 0 {
 		return maxBranchVersion
 	}
-	for _, b := range branches {
-		match, err := regexp.MatchString(`^releases?[/-](\d+(\.\d+){1,2}).*`, b)
+	for _, branch := range branches {
+		match, err := regexp.MatchString(`^releases?[/-](\d+(\.\d+){1,2}).*`, branch)
 		CheckErr(err)
 		if !match {
 			continue
 		}
 		r, err := regexp.Compile(`^releases?[/-](\d+(\.\d+){1,2}).*`)
 		CheckErr(err)
-		CurBranch := r.FindStringSubmatch(b)[1]
-		maxBranchVersion = GetMaxVersion(CurBranch, maxBranchVersion)
+		curBranchVersion := r.FindStringSubmatch(branch)[1]
+		maxBranchVersion = GetMaxVersion(curBranchVersion, maxBranchVersion)
 	}
 	return maxBranchVersion
 }
@@ -149,16 +149,16 @@ func GetMaxTagVersion() string {
 	if len(tags) == 0 {
 		return maxTagVersion
 	}
-	for _, t := range tags {
-		match, err := regexp.MatchString(`^[Vv]?(\d+(\.\d+){1,2}).*`, t)
+	for _, tag := range tags {
+		match, err := regexp.MatchString(`^[Vv]?(\d+(\.\d+){1,2}).*`, tag)
 		CheckErr(err)
 		if !match {
 			continue
 		}
 		r, err := regexp.Compile(`^[Vv]?(\d+(\.\d+){1,2}).*`)
 		CheckErr(err)
-		CurTagVersion := r.FindStringSubmatch(t)[1]
-		maxTagVersion = GetMaxVersion(CurTagVersion, maxTagVersion)
+		curTagVersion := r.FindStringSubmatch(tag)[1]
+		maxTagVersion = GetMaxVersion(curTagVersion, maxTagVersion)
 	}
 	return maxTagVersion
 }
