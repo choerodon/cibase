@@ -59,7 +59,7 @@ func init() {
 			os.Exit(0)
 		}
 	} else {
-		panic("Does not support the current CI environment!")
+		panic("Not support the current CI environment!")
 	}
 }
 
@@ -97,13 +97,13 @@ func InitData() {
 }
 
 func GetMaxSubVersion(cur, max string) int {
-	i1, err := strconv.Atoi(cur)
+	iCur, err := strconv.Atoi(cur)
 	CheckErr(err)
-	i2, err := strconv.Atoi(max)
+	iMax, err := strconv.Atoi(max)
 	CheckErr(err)
-	if i1 > i2 {
+	if iCur > iMax {
 		return 1
-	} else if i1 == i2 {
+	} else if iCur == iMax {
 		return 0
 	}
 	return -1
@@ -181,16 +181,16 @@ func GetVersion() string {
 	if match {
 		r, err := regexp.Compile(`^releases?[/-](\d+(\.\d+){1,2}).*`)
 		CheckErr(err)
-		ReleaseBranchVersion := r.FindStringSubmatch(ciCommitRefName)[1]
-		return fmt.Sprintf("%s-rc.%s", ReleaseBranchVersion, ciCommitTime)
+		releaseBranchVersion := r.FindStringSubmatch(ciCommitRefName)[1]
+		return fmt.Sprintf("%s-rc.%s", releaseBranchVersion, ciCommitTime)
 	}
 	match, err = regexp.MatchString(`^hotfix(es)?[/-](\d+(\.\d+){1,2}).*`, ciCommitRefName)
 	CheckErr(err)
 	if match {
 		r, err := regexp.Compile(`^hotfix(es)?[/-](\d+(\.\d+){1,2}).*`)
 		CheckErr(err)
-		ReleaseBranchVersion := r.FindStringSubmatch(ciCommitRefName)[2]
-		return fmt.Sprintf("%s-beta.%s", ReleaseBranchVersion, ciCommitTime)
+		hotfixBranchVersion := r.FindStringSubmatch(ciCommitRefName)[2]
+		return fmt.Sprintf("%s-beta.%s", hotfixBranchVersion, ciCommitTime)
 	}
 	vss := GetCurMaxVersion()
 	vs := strings.Split(vss, ".")

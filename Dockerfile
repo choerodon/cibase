@@ -5,8 +5,7 @@ RUN go build .
 
 FROM maven:3.5.2-jdk-8-alpine
 LABEL Dockerfile = "https://github.com/choerodon/cibase.git"
-ENV LIQUIBASE_TOOL_VERSION="1.0.4" \
-    HELM_VERSION="v2.8.2" \
+ENV HELM_VERSION="v2.8.2" \
     YQ_VERSION="1.14.1"
 COPY --from=builder /go/src/GetVersion/GetVersion /usr/bin/GetVersion
 RUN apk --no-cache add docker mysql-client xmlstarlet openssl ca-certificates openssh
