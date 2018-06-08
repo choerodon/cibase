@@ -8,7 +8,7 @@ LABEL Dockerfile = "https://github.com/choerodon/cibase.git"
 ENV HELM_VERSION="v2.8.2" \
     YQ_VERSION="1.14.1"
 COPY --from=builder /go/src/GetVersion/GetVersion /usr/bin/GetVersion
-RUN apk --no-cache add docker mysql-client xmlstarlet openssl ca-certificates openssh
+RUN apk --no-cache add docker mysql-client xmlstarlet openssl ca-certificates openssh jq
 RUN \
     wget -O /usr/bin/yq \
     "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" && \

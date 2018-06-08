@@ -11,15 +11,8 @@ maven | 用于测试及打包Java程序
 docker | 用于镜像构建阶段
 mysql-client | 用于数据库初始化脚本测试
 xmlstarlet | 用户HAP框架配置文件修改、POM文件修改
-yq | 用于修改yaml文件
-
-- 添加以下工具jar包
-
-Jar包 | 备注
----|---
-hap-liquibase-tool | 用于数据库初始化脚本测试
-
-
+yq | 用于yaml文件解析
+jq | 用于json文件解析
 
 ### Go实现生成版本号
 
