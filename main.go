@@ -110,17 +110,32 @@ func GetMaxSubVersion(cur, max string) int {
 }
 
 func GetMaxVersion(cur, max string) string {
-	flag := GetMaxSubVersion(strings.Split(cur, ".")[0], strings.Split(max, ".")[0])
+	curs := strings.Split(cur, ".")
+	maxs := strings.Split(max, ".")
+	flag := GetMaxSubVersion(curs[0], maxs[0])
 	if flag == 1 {
 		return cur
 	} else if flag == -1 {
 		return max
 	} else {
-		flag = GetMaxSubVersion(strings.Split(cur, ".")[1], strings.Split(max, ".")[1])
-		if flag == -1 {
+		flag = GetMaxSubVersion(curs[1], maxs[1])
+		if flag == 1 {
+			return cur
+		} else if flag == -1 {
 			return max
 		} else {
-			return cur
+			if len(curs) == 3 && len(maxs) == 3 {
+				flag = GetMaxSubVersion(curs[2], maxs[2])
+				if flag == 1 {
+					return cur
+				} else {
+					return max
+				}
+			} else if len(curs) == 2 {
+				return max
+			} else {
+				return cur
+			}
 		}
 	}
 }
@@ -194,8 +209,14 @@ func GetVersion() string {
 	}
 	vss := GetCurMaxVersion()
 	vs := strings.Split(vss, ".")
-	v, err := strconv.Atoi(vs[len(vs)-1])
-	CheckErr(err)
+	v := 0
+	if len(vs) == 3 {
+		v, err = strconv.Atoi(vs[len(vs)-1])
+		CheckErr(err)
+	}
+	if len(vs) == 2 {
+		vs = append(vs, "0")
+	}
 	return fmt.Sprintf("%s.%d-%s.%s", strings.Join(vs[:len(vs)-1], "."), v+1, ciCommitRefName, ciCommitTime)
 }
 
