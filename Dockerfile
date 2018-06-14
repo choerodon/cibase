@@ -1,7 +1,7 @@
 FROM golang:1.9.4-alpine3.7 as builder
 WORKDIR /go/src/GetVersion
 COPY . .
-RUN go build .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .
 
 FROM maven:3.5.2-jdk-8-alpine
 LABEL Dockerfile = "https://github.com/choerodon/cibase.git"
