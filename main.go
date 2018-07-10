@@ -2,18 +2,12 @@ package main
 
 import (
 	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 	"fmt"
-	"regexp"
-	"strings"
-	"strconv"
 	"os"
 	"path/filepath"
 )
 
 var (
-	tags            = make([]string, 0)
-	branches        = make([]string, 0)
 	ciCommitRefName string
 	ciCommitTime    string
 	isGitlabCI      bool
@@ -73,151 +67,15 @@ func InitData() {
 	}
 	client, err := git.PlainOpen(path)
 	CheckErr(err)
-	client.Fetch(&git.FetchOptions{RemoteName: "origin"})
-	refs, _ := client.References()
-	refs.ForEach(
-		func(t *plumbing.Reference) error {
-			if t.Name().IsRemote() {
-				branches = append(branches, strings.Split(t.Name().Short(), "/")[1])
-			}
-			if t.Name().IsBranch() || t.Name().IsRemote() {
-				branches = append(branches, t.Name().Short())
-			}
-			if t.Name().IsTag() {
-				tags = append(tags, t.Name().Short())
-			}
-			return nil
-		},
-	)
 	gitLogs, err := client.Log(&git.LogOptions{Order: git.LogOrderCommitterTime})
 	CheckErr(err)
 	gitLog, err := gitLogs.Next()
 	CheckErr(err)
-	ciCommitTime = gitLog.Committer.When.Format("20060102150405")
-}
-
-func GetMaxSubVersion(cur, max string) int {
-	iCur, err := strconv.Atoi(cur)
-	CheckErr(err)
-	iMax, err := strconv.Atoi(max)
-	CheckErr(err)
-	if iCur > iMax {
-		return 1
-	} else if iCur == iMax {
-		return 0
-	}
-	return -1
-}
-
-func GetMaxVersion(cur, max string) string {
-	curs := strings.Split(cur, ".")
-	maxs := strings.Split(max, ".")
-	flag := GetMaxSubVersion(curs[0], maxs[0])
-	if flag == 1 {
-		return cur
-	} else if flag == -1 {
-		return max
-	} else {
-		flag = GetMaxSubVersion(curs[1], maxs[1])
-		if flag == 1 {
-			return cur
-		} else if flag == -1 {
-			return max
-		} else {
-			if len(curs) == 3 && len(maxs) == 3 {
-				flag = GetMaxSubVersion(curs[2], maxs[2])
-				if flag == 1 {
-					return cur
-				} else {
-					return max
-				}
-			} else if len(curs) == 2 {
-				return max
-			} else {
-				return cur
-			}
-		}
-	}
-}
-
-func GetMaxBranchVersion() string {
-	maxBranchVersion := "0.0.0"
-	if len(branches) == 0 {
-		return maxBranchVersion
-	}
-	for _, branch := range branches {
-		match, err := regexp.MatchString(`^releases?[/-](\d+(\.\d+){1,2}).*`, branch)
-		CheckErr(err)
-		if !match {
-			continue
-		}
-		r, err := regexp.Compile(`^releases?[/-](\d+(\.\d+){1,2}).*`)
-		CheckErr(err)
-		curBranchVersion := r.FindStringSubmatch(branch)[1]
-		maxBranchVersion = GetMaxVersion(curBranchVersion, maxBranchVersion)
-	}
-	return maxBranchVersion
-}
-
-func GetMaxTagVersion() string {
-	maxTagVersion := "0.0.0"
-	if len(tags) == 0 {
-		return maxTagVersion
-	}
-	for _, tag := range tags {
-		match, err := regexp.MatchString(`^[Vv]?(\d+(\.\d+){1,2}).*`, tag)
-		CheckErr(err)
-		if !match {
-			continue
-		}
-		r, err := regexp.Compile(`^[Vv]?(\d+(\.\d+){1,2}).*`)
-		CheckErr(err)
-		curTagVersion := r.FindStringSubmatch(tag)[1]
-		maxTagVersion = GetMaxVersion(curTagVersion, maxTagVersion)
-	}
-	return maxTagVersion
-}
-
-func GetCurMaxVersion() string {
-	return GetMaxVersion(GetMaxBranchVersion(), GetMaxTagVersion())
+	ciCommitTime = gitLog.Committer.When.Format("2006.1.2-150405")
 }
 
 func GetVersion() string {
-	match, err := regexp.MatchString(`^dev(elop)?(ment)?$`, ciCommitRefName)
-	CheckErr(err)
-	if match {
-		vs := strings.Split(GetCurMaxVersion(), ".")
-		v, err := strconv.Atoi(vs[1])
-		CheckErr(err)
-		return fmt.Sprintf("%s.%d.0-%s.%s", vs[0], v+1, ciCommitRefName, ciCommitTime)
-	}
-	match, err = regexp.MatchString(`^releases?[/-](\d+(\.\d+){1,2}).*`, ciCommitRefName)
-	CheckErr(err)
-	if match {
-		r, err := regexp.Compile(`^releases?[/-](\d+(\.\d+){1,2}).*`)
-		CheckErr(err)
-		releaseBranchVersion := r.FindStringSubmatch(ciCommitRefName)[1]
-		return fmt.Sprintf("%s-%s.%s", releaseBranchVersion, ciCommitRefName, ciCommitTime)
-	}
-	match, err = regexp.MatchString(`^hotfix(es)?[/-](\d+(\.\d+){1,2}).*`, ciCommitRefName)
-	CheckErr(err)
-	if match {
-		r, err := regexp.Compile(`^hotfix(es)?[/-](\d+(\.\d+){1,2}).*`)
-		CheckErr(err)
-		hotfixBranchVersion := r.FindStringSubmatch(ciCommitRefName)[2]
-		return fmt.Sprintf("%s-%s.%s", hotfixBranchVersion, ciCommitRefName, ciCommitTime)
-	}
-	vss := GetCurMaxVersion()
-	vs := strings.Split(vss, ".")
-	v := 0
-	if len(vs) == 3 {
-		v, err = strconv.Atoi(vs[len(vs)-1])
-		CheckErr(err)
-	}
-	if len(vs) == 2 {
-		vs = append(vs, "0")
-	}
-	return fmt.Sprintf("%s.%d-%s.%s", strings.Join(vs[:len(vs)-1], "."), v+1, ciCommitRefName, ciCommitTime)
+	return fmt.Sprintf("%s-%s", ciCommitTime, ciCommitRefName)
 }
 
 func main() {
