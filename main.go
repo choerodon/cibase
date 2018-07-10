@@ -189,7 +189,7 @@ func GetVersion() string {
 		vs := strings.Split(GetCurMaxVersion(), ".")
 		v, err := strconv.Atoi(vs[1])
 		CheckErr(err)
-		return fmt.Sprintf("%s.%d.0-dev.%s", vs[0], v+1, ciCommitTime)
+		return fmt.Sprintf("%s.%d.0-%s.%s", vs[0], v+1, ciCommitRefName, ciCommitTime)
 	}
 	match, err = regexp.MatchString(`^releases?[/-](\d+(\.\d+){1,2}).*`, ciCommitRefName)
 	CheckErr(err)
@@ -197,7 +197,7 @@ func GetVersion() string {
 		r, err := regexp.Compile(`^releases?[/-](\d+(\.\d+){1,2}).*`)
 		CheckErr(err)
 		releaseBranchVersion := r.FindStringSubmatch(ciCommitRefName)[1]
-		return fmt.Sprintf("%s-rc.%s", releaseBranchVersion, ciCommitTime)
+		return fmt.Sprintf("%s-%s.%s", releaseBranchVersion, ciCommitRefName, ciCommitTime)
 	}
 	match, err = regexp.MatchString(`^hotfix(es)?[/-](\d+(\.\d+){1,2}).*`, ciCommitRefName)
 	CheckErr(err)
@@ -205,7 +205,7 @@ func GetVersion() string {
 		r, err := regexp.Compile(`^hotfix(es)?[/-](\d+(\.\d+){1,2}).*`)
 		CheckErr(err)
 		hotfixBranchVersion := r.FindStringSubmatch(ciCommitRefName)[2]
-		return fmt.Sprintf("%s-beta.%s", hotfixBranchVersion, ciCommitTime)
+		return fmt.Sprintf("%s-%s.%s", hotfixBranchVersion, ciCommitRefName, ciCommitTime)
 	}
 	vss := GetCurMaxVersion()
 	vs := strings.Split(vss, ".")
