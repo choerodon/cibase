@@ -1,7 +1,7 @@
 FROM maven:3.5.2-jdk-8-alpine
 LABEL Dockerfile = "https://github.com/choerodon/cibase.git"
 ENV HELM_VERSION="v2.8.2" \
-    YQ_VERSION="2.1.2"
+    YQ_VERSION="2.1.1"
 RUN apk --no-cache add \
     docker \
     mysql-client \
