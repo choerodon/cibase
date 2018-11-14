@@ -17,9 +17,28 @@ RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
     echo 'deb-src http://mirrors.aliyun.com/debian-security/ stretch/updates main non-free contrib' >> /etc/apt/sources.list
 # Install base packages
 RUN apt-get update && apt-get install -y \
-        vim locales openssh-client ca-certificates tar gzip net-tools netcat unzip zip bzip2 curl wget python2.7 python-pip git jq mysql-client xmlstarlet \
+        vim \
+        locales \
+        openssh-client \
+        ca-certificates \
+        tar \
+        gzip \
+        net-tools \
+        netcat \
+        unzip \
+        zip \
+        bzip2 \
+        curl \
+        wget \
+        python2.7 \
+        python-pip \
+        git \
+        jq \
+        mysql-client \
+        xmlstarlet \
 	&& rm -rf /var/lib/apt/lists/* 
-RUN wget -O /usr/bin/yq \
+RUN ln -s /usr/bin/xmlstarlet /usr/bin/xml && \
+    wget -O /usr/bin/yq \
         "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" && \
     chmod +x /usr/bin/yq  && \
     wget -O "/tmp/docker-${DOCKER_VERSION}-ce.tgz" \
