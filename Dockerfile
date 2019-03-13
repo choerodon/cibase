@@ -1,5 +1,6 @@
+FROM gcr.io/kaniko-project/executor:v0.9.0
 FROM maven:3.5.2-jdk-8-slim
-
+COPY --from=0 /kaniko/executor /usr/local/bin/kaniko
 ENV TZ="Asia/Shanghai" \
     HELM_VERSION="v2.8.2" \
     HELM_PUSH_VERSION="v0.7.1" \
