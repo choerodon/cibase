@@ -1,6 +1,8 @@
+# This is your Editor pane. Write the Dockerfile here and 
+# use the command line to execute commands
 # FROM gcr.io/kaniko-project/executor:v0.9.0
 FROM registry.cn-hangzhou.aliyuncs.com/setzero/executor:v0.9.0
-FROM maven:3-jdk-8-alpine
+FROM maven:3.5.2-jdk-8-slim
 ENV TZ="Asia/Shanghai" \
     HELM_PUSH_VERSION="v0.7.1" \
     YQ_VERSION="2.2.1" \
@@ -11,27 +13,37 @@ ENV TZ="Asia/Shanghai" \
     HELM_SHA256="15eca6ad225a8279de80c7ced42305e24bc5ac60bb7d96f2d2fa4af86e02c794"
 
 # Add mirror source
-RUN cp /etc/apk/repositories /etc/apk/repositories.bak && \
-    sed -i 's dl-cdn.alpinelinux.org mirrors.aliyun.com g' /etc/apk/repositories
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
+    sed -i 's deb.debian.org mirrors.aliyun.com g' /etc/apt/sources.list
 
-# Install packages
+# Install kaniko
 COPY --from=0 /kaniko/executor /usr/local/bin/kaniko
-RUN apk --no-cache add \
+
+# Install base packages
+RUN apt-get update && apt-get install -y \
         jq \
+        vim \
         git \
-        npm \
-        gcc \
-        python \
-        py2-pip \
-        openssh \
-        openssl \
-        musl-dev \
-        libffi-dev \
-        python2-dev \
-        openssl-dev \
+        tar \
+        curl \
+        wget \
+        netcat \
+        net-tools \
+        python2.7 \
+        python-pip \
         xmlstarlet \
         mysql-client \
-        ca-certificates && \
+        openssh-client \
+        ca-certificates \
+        apt-transport-https && \
+    # Install nodejs
+    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+    echo 'deb https://deb.nodesource.com/node_11.x stretch main' > /etc/apt/sources.list.d/nodesource.list && \
+    echo 'deb-src https://deb.nodesource.com/node_11.x stretch main' >> /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && apt-get install -y \
+        nodejs && \
+	rm -rf /var/lib/apt/lists/* && \
+	# Install other packages
     wget -q -O /usr/bin/yq \
         "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" && \
     echo "${YQ_SHA256}  /usr/bin/yq" | sha256sum -c - && \
@@ -50,4 +62,5 @@ RUN apk --no-cache add \
     helm plugin install --version $HELM_PUSH_VERSION https://github.com/chartmuseum/helm-push && \
     pip install --no-cache-dir pymysql==0.9.2 pyyaml==3.13 -i https://mirrors.aliyun.com/pypi/simple/ && \
     npm install -g cnpm && \
+    ln -s /usr/bin/xmlstarlet /usr/bin/xml && \
     ln -s /usr/bin/img /usr/bin/docker
