@@ -1,53 +1,55 @@
 # FROM gcr.io/kaniko-project/executor:v0.9.0
 FROM registry.cn-hangzhou.aliyuncs.com/setzero/executor:v0.9.0
-FROM maven:3-jdk-8-alpine
+# FROM maven:3-jdk-8-alpine
+FROM dockerhub.azk8s.cn/library/maven:3-jdk-8-alpine
 ENV TZ="Asia/Shanghai" \
+    YQ_VERSION="2.4.0" \
+    IMG_VERSION="v0.5.7" \
+    HELM_VERSION="v2.13.1" \
+    DOCKER_VERSION="18.06.3" \
     HELM_PUSH_VERSION="v0.7.1" \
-    YQ_VERSION="2.2.1" \
-    IMG_VERSION="v0.5.6" \
-    HELM_VERSION="v2.13.0" \
-    YQ_SHA256="54443f0e9796dfb8423a6e33b8175a0f77b8bb0eb55db820ecb84098db2c0ed4" \
-    IMG_SHA256="f5d686465a7463c296e94634bd9597af58544ead924567c9128a4ee352591bf1" \
-    HELM_SHA256="15eca6ad225a8279de80c7ced42305e24bc5ac60bb7d96f2d2fa4af86e02c794"
+    YQ_SHA256="99a01ae32f0704773c72103adb7050ef5c5cad14b517a8612543821ef32d6cc9" \
+    DOCKER_SHA256="346f9394393ee8db5f8bd1e229ee9d90e5b36931bdd754308b2ae68884dd6822"
 
 # Add mirror source
 RUN cp /etc/apk/repositories /etc/apk/repositories.bak && \
     sed -i 's dl-cdn.alpinelinux.org mirrors.aliyun.com g' /etc/apk/repositories
 
-# Install packages
-COPY --from=0 /kaniko/executor /usr/local/bin/kaniko
+# Install kaniko
+COPY --from=0 /kaniko/executor /usr/bin/kaniko
+# Install base packages
 RUN apk --no-cache add \
         jq \
         git \
         npm \
-        gcc \
-        python \
-        py2-pip \
-        openssh \
-        openssl \
-        musl-dev \
-        libffi-dev \
-        python2-dev \
-        openssl-dev \
         xmlstarlet \
         mysql-client \
         ca-certificates && \
-    wget -q -O /usr/bin/yq \
+    # install docker client
+    wget -qO "/tmp/docker-${DOCKER_VERSION}-ce.tgz" \
+        "https://mirror.azure.cn/docker-ce/linux/static/stable/x86_64/docker-${DOCKER_VERSION}-ce.tgz" && \
+    echo "${DOCKER_SHA256}  /tmp/docker-${DOCKER_VERSION}-ce.tgz" | sha256sum -c - && \
+    tar zxf "/tmp/docker-${DOCKER_VERSION}-ce.tgz" -C /tmp && \
+    mv /tmp/docker/docker /usr/bin && \
+    # install yq
+    wget -qO /usr/bin/yq \
         "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" && \
     echo "${YQ_SHA256}  /usr/bin/yq" | sha256sum -c - && \
     chmod a+x /usr/bin/yq  && \
-    wget -q -O /usr/bin/img \
+    # install img
+    IMG_SHA256=`curl -sSL "https://github.com/genuinetools/img/releases/download/${IMG_VERSION}/img-linux-amd64.sha256" | awk '{print $1}'` && \
+    wget -qO /usr/bin/img \
         "https://github.com/genuinetools/img/releases/download/${IMG_VERSION}/img-linux-amd64" && \
     echo "${IMG_SHA256}  /usr/bin/img" | sha256sum -c - && \
     chmod a+x /usr/bin/img  && \
-    wget -q -O "/tmp/helm.tar.gz" \
-        "https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz" && \
-    echo "${HELM_SHA256}  /tmp/helm.tar.gz" | sha256sum -c - && \
-    tar xzf "/tmp/helm.tar.gz" -C /tmp && \
+    # install helm
+    HELM_SHA256=`curl -sSL "https://mirror.azure.cn/kubernetes/helm/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256"` && \
+    wget -qO "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" \
+        "https://mirror.azure.cn/kubernetes/helm/helm-${HELM_VERSION}-linux-amd64.tar.gz" && \
+    echo "${HELM_SHA256}  /tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" | sha256sum -c - && \
+    tar xzf "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" -C /tmp && \
     mv /tmp/linux-amd64/helm /usr/bin/helm && \
+    # post install
     rm -r /tmp/* && \
-    helm init -c && \
-    helm plugin install --version $HELM_PUSH_VERSION https://github.com/chartmuseum/helm-push && \
-    pip install --no-cache-dir pymysql==0.9.2 pyyaml==3.13 -i https://mirrors.aliyun.com/pypi/simple/ && \
-    npm install -g cnpm && \
-    ln -s /usr/bin/img /usr/bin/docker
+    helm init -c --stable-repo-url=https://mirror.azure.cn/kubernetes/charts/ && \
+    helm plugin install --version $HELM_PUSH_VERSION https://github.com/chartmuseum/helm-push
