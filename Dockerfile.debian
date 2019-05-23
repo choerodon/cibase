@@ -1,24 +1,22 @@
-# This is your Editor pane. Write the Dockerfile here and 
-# use the command line to execute commands
 # FROM gcr.io/kaniko-project/executor:v0.9.0
 FROM registry.cn-hangzhou.aliyuncs.com/setzero/executor:v0.9.0
-FROM maven:3.5.2-jdk-8-slim
+# FROM maven:3.5.2-jdk-8-slim
+FROM dockerhub.azk8s.cn/library/maven:3.5.2-jdk-8-slim
 ENV TZ="Asia/Shanghai" \
+    YQ_VERSION="2.4.0" \
+    IMG_VERSION="v0.5.7" \
+    HELM_VERSION="v2.13.1" \
+    DOCKER_VERSION="18.06.3" \
     HELM_PUSH_VERSION="v0.7.1" \
-    YQ_VERSION="2.2.1" \
-    IMG_VERSION="v0.5.6" \
-    HELM_VERSION="v2.13.0" \
-    YQ_SHA256="54443f0e9796dfb8423a6e33b8175a0f77b8bb0eb55db820ecb84098db2c0ed4" \
-    IMG_SHA256="f5d686465a7463c296e94634bd9597af58544ead924567c9128a4ee352591bf1" \
-    HELM_SHA256="15eca6ad225a8279de80c7ced42305e24bc5ac60bb7d96f2d2fa4af86e02c794"
+    YQ_SHA256="99a01ae32f0704773c72103adb7050ef5c5cad14b517a8612543821ef32d6cc9" \
+    DOCKER_SHA256="346f9394393ee8db5f8bd1e229ee9d90e5b36931bdd754308b2ae68884dd6822"
 
 # Add mirror source
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
     sed -i 's deb.debian.org mirrors.aliyun.com g' /etc/apt/sources.list
 
 # Install kaniko
-COPY --from=0 /kaniko/executor /usr/local/bin/kaniko
-
+COPY --from=0 /kaniko/executor /usr/bin/kaniko
 # Install base packages
 RUN apt-get update && apt-get install -y \
         jq \
@@ -27,40 +25,44 @@ RUN apt-get update && apt-get install -y \
         tar \
         curl \
         wget \
-        netcat \
-        net-tools \
-        python2.7 \
-        python-pip \
+        gnupg2 \
         xmlstarlet \
         mysql-client \
-        openssh-client \
         ca-certificates \
         apt-transport-https && \
     # Install nodejs
-    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+    curl -sSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
     echo 'deb https://deb.nodesource.com/node_11.x stretch main' > /etc/apt/sources.list.d/nodesource.list && \
     echo 'deb-src https://deb.nodesource.com/node_11.x stretch main' >> /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && apt-get install -y \
         nodejs && \
 	rm -rf /var/lib/apt/lists/* && \
-	# Install other packages
-    wget -q -O /usr/bin/yq \
+    # install docker client
+    wget -qO "/tmp/docker-${DOCKER_VERSION}-ce.tgz" \
+        "https://mirror.azure.cn/docker-ce/linux/static/stable/x86_64/docker-${DOCKER_VERSION}-ce.tgz" && \
+    echo "${DOCKER_SHA256}  /tmp/docker-${DOCKER_VERSION}-ce.tgz" | sha256sum -c - && \
+    tar zxf "/tmp/docker-${DOCKER_VERSION}-ce.tgz" -C /tmp && \
+    mv /tmp/docker/docker /usr/bin && \
+    # install yq
+    wget -qO /usr/bin/yq \
         "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" && \
     echo "${YQ_SHA256}  /usr/bin/yq" | sha256sum -c - && \
     chmod a+x /usr/bin/yq  && \
-    wget -q -O /usr/bin/img \
+    # install img
+    IMG_SHA256=`curl -sSL "https://github.com/genuinetools/img/releases/download/${IMG_VERSION}/img-linux-amd64.sha256" | awk '{print $1}'` && \
+    wget -qO /usr/bin/img \
         "https://github.com/genuinetools/img/releases/download/${IMG_VERSION}/img-linux-amd64" && \
     echo "${IMG_SHA256}  /usr/bin/img" | sha256sum -c - && \
     chmod a+x /usr/bin/img  && \
-    wget -q -O "/tmp/helm.tar.gz" \
-        "https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz" && \
-    echo "${HELM_SHA256}  /tmp/helm.tar.gz" | sha256sum -c - && \
-    tar xzf "/tmp/helm.tar.gz" -C /tmp && \
+    # install helm
+    HELM_SHA256=`curl -sSL "https://mirror.azure.cn/kubernetes/helm/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256"` && \
+    wget -qO "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" \
+        "https://mirror.azure.cn/kubernetes/helm/helm-${HELM_VERSION}-linux-amd64.tar.gz" && \
+    echo "${HELM_SHA256}  /tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" | sha256sum -c - && \
+    tar xzf "/tmp/helm-${HELM_VERSION}-linux-amd64.tar.gz" -C /tmp && \
     mv /tmp/linux-amd64/helm /usr/bin/helm && \
+    # post install
     rm -r /tmp/* && \
-    helm init -c && \
+    helm init -c --stable-repo-url=https://mirror.azure.cn/kubernetes/charts/ && \
     helm plugin install --version $HELM_PUSH_VERSION https://github.com/chartmuseum/helm-push && \
-    pip install --no-cache-dir pymysql==0.9.2 pyyaml==3.13 -i https://mirrors.aliyun.com/pypi/simple/ && \
-    npm install -g cnpm && \
-    ln -s /usr/bin/xmlstarlet /usr/bin/xml && \
-    ln -s /usr/bin/img /usr/bin/docker
+    ln -s /usr/bin/xmlstarlet /usr/bin/xml
