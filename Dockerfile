@@ -1,11 +1,9 @@
-# FROM gcr.io/kaniko-project/executor:v0.9.0
-FROM registry.cn-hangzhou.aliyuncs.com/setzero/executor:v0.9.0
-# FROM maven:3-jdk-8-alpine
+FROM gcr.azk8s.cn/kaniko-project/executor:v0.11.0
 FROM dockerhub.azk8s.cn/library/maven:3-jdk-8-alpine
 ENV TZ="Asia/Shanghai" \
     YQ_VERSION="2.4.0" \
     IMG_VERSION="v0.5.7" \
-    HELM_VERSION="v2.13.1" \
+    HELM_VERSION="v2.14.1" \
     DOCKER_VERSION="18.06.3" \
     HELM_PUSH_VERSION="v0.7.1" \
     YQ_SHA256="99a01ae32f0704773c72103adb7050ef5c5cad14b517a8612543821ef32d6cc9" \
