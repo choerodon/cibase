@@ -20,6 +20,7 @@ RUN apk --no-cache add \
         jq \
         git \
         npm \
+        yarn \
         xmlstarlet \
         mysql-client \
         ca-certificates && \
