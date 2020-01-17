@@ -1,4 +1,4 @@
-FROM gcr.azk8s.cn/kaniko-project/executor:v0.11.0
+FROM gcr.azk8s.cn/kaniko-project/executor:v0.15.0
 FROM dockerhub.azk8s.cn/library/maven:3-jdk-8-alpine
 ENV TZ="Asia/Shanghai" \
     YQ_VERSION="2.4.0" \
@@ -21,6 +21,7 @@ RUN apk --no-cache add \
         git \
         npm \
         yarn \
+        python \
         xmlstarlet \
         mysql-client \
         ca-certificates && \
