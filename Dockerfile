@@ -1,6 +1,6 @@
-FROM gcr.azk8s.cn/kaniko-project/executor:v0.18.0 AS kaniko
-FROM dockerhub.azk8s.cn/sonarsource/sonar-scanner-cli:4.3 AS sonar-scanner-cli
-FROM dockerhub.azk8s.cn/library/maven:3-jdk-8-alpine
+FROM gcr.io/kaniko-project/executor:v0.22.0 AS kaniko
+FROM sonarsource/sonar-scanner-cli:4.3 AS sonar-scanner-cli
+FROM maven:3-jdk-8-alpine
 
 ENV SONAR_SCANNER_HOME="/opt/sonar-scanner" \
     SONAR_SCANNER_VERSION="4.3.0.2102"
