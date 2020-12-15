@@ -20,6 +20,7 @@ COPY sonar-scanner/lib /opt/sonar-scanner/lib
 # Install base packages
 RUN set -eux; \
     docker-credential-gcr config --token-source=env; \
+    ln -s /kaniko/executor /kaniko/kaniko; \
     apk --no-cache add \
         xz \
         jq \
