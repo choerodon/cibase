@@ -9,16 +9,17 @@ ENV TZ="Asia/Shanghai" \
     HELM_VERSION="v3.4.0" \
     DOCKER_VERSION="19.03.13" \
     HELM_PUSH_VERSION="v0.9.0" \
-    PATH="${SONAR_SCANNER_HOME}/bin:${PATH}"
+    PATH="${SONAR_SCANNER_HOME}/bin:/kaniko:${PATH}"
 
 # Install kaniko sonar-scanner-cli
-COPY --from=kaniko /kaniko/executor /usr/bin/kaniko
+COPY --from=kaniko /kaniko /kaniko
 COPY sonar-scanner/bin /opt/sonar-scanner/bin
 COPY sonar-scanner/conf /opt/sonar-scanner/conf
 COPY sonar-scanner/lib /opt/sonar-scanner/lib
 
 # Install base packages
 RUN set -eux; \
+    docker-credential-gcr config --token-source=env; \
     apk --no-cache add \
         xz \
         jq \
